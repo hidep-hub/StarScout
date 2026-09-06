@@ -19,7 +19,7 @@
 - [ ] URL登録
 - [ ] 複数URL
 - [ ] HTTP/HTTPS監視
-- [ ] ポート指定
+- [ ] ポート番号(任意項目、Phase3 TCP/Ping監視向けの補助フィールド)
 - [ ] HTTPステータス取得
 - [ ] Timeout検知
 - [ ] Connection Error検知
