@@ -16,49 +16,49 @@
 
 ### Monitoring
 
-- [ ] URL登録
-- [ ] 複数URL
-- [ ] HTTP/HTTPS監視
-- [ ] ポート番号(任意項目、Phase3 TCP/Ping監視向けの補助フィールド)
-- [ ] HTTPステータス取得
-- [ ] Timeout検知
-- [ ] Connection Error検知
-- [ ] DNS Error検知
+- [x] URL登録
+- [x] 複数URL
+- [x] HTTP/HTTPS監視
+- [x] ポート番号(任意項目、Phase3 TCP/Ping監視向けの補助フィールド)(※DBスキーマ・APIは対応済み。Web UIからの入力欄は未実装)
+- [x] HTTPステータス取得
+- [x] Timeout検知
+- [x] Connection Error検知
+- [x] DNS Error検知
 
 ### State
 
-- [ ] NORMAL
-- [ ] WARNING(応答遅延、監視対象ごとに閾値設定)
-- [ ] DOWN(2回連続失敗で判定)
-- [ ] RECOVERED
-- [ ] UNKNOWN(起動直後・初回チェック未実施)
-- [ ] 障害開始時刻
-- [ ] 復旧時刻
-- [ ] 障害継続時間
+- [x] NORMAL
+- [x] WARNING(応答遅延、監視対象ごとに閾値設定)
+- [x] DOWN(2回連続失敗で判定)
+- [x] RECOVERED
+- [x] UNKNOWN(起動直後・初回チェック未実施)
+- [x] 障害開始時刻
+- [x] 復旧時刻
+- [x] 障害継続時間
 
 ### Windows
 
-- [ ] System Tray
-- [ ] 状態に応じたアイコン
-- [ ] Tooltip
-- [ ] Windows Toast(DOWN/RECOVERED)
-- [ ] Windows Toast(WARNING、監視対象ごとにON/OFF設定可)
-- [ ] Dashboard起動
+- [x] System Tray
+- [x] 状態に応じたアイコン
+- [x] Tooltip
+- [x] Windows Toast(DOWN/RECOVERED)
+- [x] Windows Toast(WARNING、監視対象ごとにON/OFF設定可)
+- [x] Dashboard起動
 
 ### Web
 
-- [ ] Dashboard
-- [ ] URL登録画面
-- [ ] 監視設定画面(正常ステータス上書き、WARNING遅延閾値、WARNING通知ON/OFF含む)
-- [ ] 現在の障害一覧
-- [ ] 障害履歴
+- [x] Dashboard
+- [x] URL登録画面
+- [x] 監視設定画面(正常ステータス上書き、WARNING遅延閾値、WARNING通知ON/OFF含む)
+- [x] 現在の障害一覧(監視対象一覧テーブルの状態バッジで確認可能)
+- [ ] 障害履歴(APIは実装済み `GET /api/targets/:id/history`・`/incidents` だが、閲覧するWeb UIは未実装)
 
 ### Storage
 
-- [ ] 軽量DB
-- [ ] 監視対象情報
-- [ ] 状態
-- [ ] Incident情報
+- [x] 軽量DB
+- [x] 監視対象情報
+- [x] 状態
+- [x] Incident情報
 
 ## Phase 2: 利便性向上
 
