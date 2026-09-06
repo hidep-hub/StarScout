@@ -8,6 +8,7 @@ import { loadConfig } from './config.js';
 import { startPolling, formatDuration } from './poller.js';
 import { createStatusIconPng, aggregateStatus } from './icon.js';
 import { buildTooltip } from './tooltip.js';
+import { playTestNotificationScenario } from './testNotification.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const config = loadConfig(join(__dirname, '..', 'data', 'config.json'));
@@ -51,6 +52,8 @@ function handleEvents(events) {
 function buildMenu() {
   return Menu.buildFromTemplate([
     { label: 'ダッシュボードを開く', click: () => shell.openExternal(config.serverUrl) },
+    // SS-011: 実際に監視対象を落とさなくても通知の見た目を体験できるようにする
+    { label: 'テスト通知を送る', click: () => playTestNotificationScenario((event) => handleEvents([event])) },
     { type: 'separator' },
     { label: '終了', click: () => app.quit() },
   ]);
