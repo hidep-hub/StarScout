@@ -8,4 +8,5 @@ build/
 *.sqlite3-journal
 .vscode/
 packages/server/data/
+packages/tray/data/
 .playwright-mcp/
