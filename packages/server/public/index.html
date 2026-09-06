@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StarScout Dashboard</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="app-header">
+  <h1>🛰️ StarScout</h1>
+  <p class="tagline">Monitor. Notify. Stay Alert.</p>
+</header>
+
+<main>
+  <section class="summary">
+    <div class="summary-card normal">
+      <span class="count" id="count-normal">0</span>
+      <span class="label">NORMAL</span>
+    </div>
+    <div class="summary-card warning">
+      <span class="count" id="count-warning">0</span>
+      <span class="label">WARNING</span>
+    </div>
+    <div class="summary-card down">
+      <span class="count" id="count-down">0</span>
+      <span class="label">DOWN</span>
+    </div>
+    <div class="summary-card unknown">
+      <span class="count" id="count-unknown">0</span>
+      <span class="label">UNKNOWN</span>
+    </div>
+  </section>
+
+  <section class="targets">
+    <div class="section-header">
+      <h2>監視対象</h2>
+      <button id="toggle-form-btn" class="btn primary">+ 新規登録</button>
+    </div>
+
+    <form id="target-form" class="target-form" hidden>
+      <div class="form-row">
+        <label>表示名 <input type="text" name="name" required></label>
+        <label>URL <input type="url" name="url" required placeholder="https://example.com"></label>
+      </div>
+      <div class="form-row">
+        <label>監視間隔(秒) <input type="number" name="intervalSec" value="60" min="5"></label>
+        <label>タイムアウト(秒) <input type="number" name="timeoutSec" value="5" min="1"></label>
+        <label>正常ステータス <input type="text" name="expectedStatusPattern" value="2xx"></label>
+        <label>WARNING閾値(ms) <input type="number" name="warningThresholdMs" value="2000" min="0"></label>
+      </div>
+      <div class="form-row">
+        <label class="checkbox"><input type="checkbox" name="warningNotifyEnabled"> WARNING時に通知</label>
+        <button type="submit" id="submit-form-btn" class="btn primary">登録</button>
+        <button type="button" id="cancel-form-btn" class="btn">キャンセル</button>
+      </div>
+    </form>
+
+    <table class="target-table">
+      <thead>
+        <tr>
+          <th>状態</th>
+          <th>名前</th>
+          <th>URL</th>
+          <th>HTTP</th>
+          <th>応答時間</th>
+          <th>最終チェック</th>
+          <th>障害開始</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="target-rows">
+        <tr><td colspan="8" class="empty">読み込み中...</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>
