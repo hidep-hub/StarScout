@@ -1,0 +1,12 @@
+{
+  "name": "starscout",
+  "private": true,
+  "version": "0.1.0",
+  "description": "StarScout - Monitor. Notify. Stay Alert.",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=24.0.0"
+  }
+}
