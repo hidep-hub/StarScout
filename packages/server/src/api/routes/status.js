@@ -24,6 +24,10 @@ export function registerStatusRoutes(router, storage) {
         lastError: state.last_error,
         incidentStartAt: state.incident_start_at,
         recoveredAt: state.recovered_at,
+        initialPageTitle: target.initial_page_title,
+        lastPageTitle: state.last_page_title,
+        titleChangedAt: state.title_changed_at,
+        keyword: target.keyword,
       };
     });
 

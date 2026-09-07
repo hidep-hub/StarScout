@@ -48,6 +48,7 @@
         <label>タイムアウト(秒) <input type="number" name="timeoutSec" value="5" min="1"></label>
         <label>正常ステータス <input type="text" name="expectedStatusPattern" value="2xx"></label>
         <label>WARNING閾値(ms) <input type="number" name="warningThresholdMs" value="2000" min="0"></label>
+        <label>Keyword(任意) <input type="text" name="keyword" placeholder="ページに含まれるべき文字列"></label>
       </div>
       <div class="form-row">
         <label class="checkbox"><input type="checkbox" name="warningNotifyEnabled"> WARNING時に通知</label>
@@ -81,6 +82,22 @@
     <div class="modal-header">
       <h3 id="detail-title">詳細</h3>
       <button id="detail-close-btn" class="btn">閉じる</button>
+    </div>
+
+    <div class="content-section">
+      <div class="content-row">
+        <span class="content-label">初期タイトル</span>
+        <span id="detail-initial-title">-</span>
+      </div>
+      <div class="content-row">
+        <span class="content-label">現在のタイトル</span>
+        <span id="detail-current-title">-</span>
+        <span id="detail-title-changed-badge" class="badge-changed" hidden>変更あり</span>
+      </div>
+      <div class="content-row" id="detail-keyword-row" hidden>
+        <span class="content-label">Keyword</span>
+        <span id="detail-keyword-status">-</span>
+      </div>
     </div>
 
     <div class="period-tabs" id="period-tabs">

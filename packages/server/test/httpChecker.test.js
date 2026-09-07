@@ -97,3 +97,74 @@ test('checkTarget reports a connection error when nothing is listening', async (
   assert.equal(result.httpStatus, null);
   assert.match(result.error, /Connection Error/);
 });
+
+test('checkTarget extracts the page title when initial_page_title is tracked', async () => {
+  const server = createServer((req, res) => res.writeHead(200).end('<html><head><title>Example Site</title></head></html>'));
+  const port = await listen(server);
+
+  try {
+    const result = await checkTarget({
+      url: `http://127.0.0.1:${port}/`,
+      timeout_sec: 5,
+      expected_status_pattern: '2xx',
+      initial_page_title: 'Example Site',
+    });
+    assert.equal(result.success, true);
+    assert.equal(result.pageTitle, 'Example Site');
+  } finally {
+    await close(server);
+  }
+});
+
+test('checkTarget does not extract a title when title/keyword tracking is unnecessary', async () => {
+  const server = createServer((req, res) => res.writeHead(200).end('<html><head><title>Untracked</title></head></html>'));
+  const port = await listen(server);
+
+  try {
+    const result = await checkTarget({
+      url: `http://127.0.0.1:${port}/`,
+      timeout_sec: 5,
+      expected_status_pattern: '2xx',
+    });
+    assert.equal(result.success, true);
+    assert.equal(result.pageTitle, null);
+  } finally {
+    await close(server);
+  }
+});
+
+test('checkTarget fails with Keyword Not Found when the keyword is missing', async () => {
+  const server = createServer((req, res) => res.writeHead(200).end('<html><body>Hello</body></html>'));
+  const port = await listen(server);
+
+  try {
+    const result = await checkTarget({
+      url: `http://127.0.0.1:${port}/`,
+      timeout_sec: 5,
+      expected_status_pattern: '2xx',
+      keyword: 'Maintenance',
+    });
+    assert.equal(result.success, false);
+    assert.equal(result.error, 'Keyword Not Found');
+  } finally {
+    await close(server);
+  }
+});
+
+test('checkTarget succeeds when the keyword is present', async () => {
+  const server = createServer((req, res) => res.writeHead(200).end('<html><body>System Operational</body></html>'));
+  const port = await listen(server);
+
+  try {
+    const result = await checkTarget({
+      url: `http://127.0.0.1:${port}/`,
+      timeout_sec: 5,
+      expected_status_pattern: '2xx',
+      keyword: 'Operational',
+    });
+    assert.equal(result.success, true);
+    assert.equal(result.error, null);
+  } finally {
+    await close(server);
+  }
+});

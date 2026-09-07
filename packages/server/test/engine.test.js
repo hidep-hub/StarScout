@@ -11,6 +11,10 @@ function fail(error = 'Timeout') {
   return { success: false, httpStatus: null, responseTimeMs: null, error };
 }
 
+function okWithTitle(pageTitle, responseTimeMs = 100) {
+  return { success: true, httpStatus: 200, responseTimeMs, error: null, pageTitle };
+}
+
 // checkFnの戻り値をテストごとに差し替えるためのスタブ
 function stubChecker(results) {
   let call = 0;
@@ -128,6 +132,43 @@ test('runCheck emits state-changed only when the status actually changes', async
   assert.equal(changes.length, 1);
   assert.equal(changes[0].from, 'UNKNOWN');
   assert.equal(changes[0].to, 'NORMAL');
+
+  storage.close();
+});
+
+test('runCheck emits title-changed once, then clears it when the title reverts', async () => {
+  const storage = createStorage(':memory:');
+  const target = storage.targets.create({
+    name: 'Test Target',
+    url: 'https://example.local',
+    initialPageTitle: 'Original Title',
+  });
+  const engine = createMonitorEngine(storage, {
+    checkFn: stubChecker([
+      okWithTitle('Original Title'),
+      okWithTitle('Changed Title'),
+      okWithTitle('Changed Title'),
+      okWithTitle('Original Title'),
+    ]),
+  });
+
+  const changes = [];
+  engine.on('title-changed', (evt) => changes.push(evt));
+
+  await engine.runCheck(target); // タイトル変化なし
+  assert.equal(storage.state.get(target.id).title_changed_at, null);
+
+  await engine.runCheck(target); // タイトル変化を検知
+  assert.equal(changes.length, 1);
+  assert.equal(changes[0].from, 'Original Title');
+  assert.equal(changes[0].to, 'Changed Title');
+  assert.ok(storage.state.get(target.id).title_changed_at);
+
+  await engine.runCheck(target); // 変化継続中は再emitしない
+  assert.equal(changes.length, 1);
+
+  await engine.runCheck(target); // 元のタイトルに戻ったら解除
+  assert.equal(storage.state.get(target.id).title_changed_at, null);
 
   storage.close();
 });

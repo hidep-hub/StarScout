@@ -20,6 +20,17 @@ test('targets.create initializes target_state as UNKNOWN', () => {
   storage.close();
 });
 
+test('targets.create / update persist the keyword field', () => {
+  const storage = setup();
+  const target = storage.targets.create({ name: 'A', url: 'https://a.example.local', keyword: 'Operational' });
+  assert.equal(target.keyword, 'Operational');
+
+  const updated = storage.targets.update(target.id, { keyword: 'Maintenance' });
+  assert.equal(updated.keyword, 'Maintenance');
+
+  storage.close();
+});
+
 test('targets.findAll / update / remove', () => {
   const storage = setup();
   const a = storage.targets.create({ name: 'A', url: 'https://a.example.local' });

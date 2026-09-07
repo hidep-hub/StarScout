@@ -1,13 +1,13 @@
-// FR-001: 登録時に初期ページタイトルを自動取得して保持するのみ(状態判定には使わない)
+import { extractPageTitle } from '../../monitor/pageTitle.js';
+
+// FR-001: 登録時に初期ページタイトルを自動取得して保持する(Phase2でのタイトル変更検知の基準値になる)
 async function fetchPageTitle(url) {
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 3000);
     const response = await fetch(url, { signal: controller.signal });
     clearTimeout(timer);
-    const html = await response.text();
-    const match = /<title[^>]*>([^<]*)<\/title>/i.exec(html);
-    return match ? match[1].trim() : null;
+    return extractPageTitle(await response.text());
   } catch {
     return null;
   }

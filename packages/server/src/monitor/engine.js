@@ -33,6 +33,26 @@ export function createMonitorEngine(storage, { checkFn = checkTarget } = {}) {
       lastError: checkResult.error,
     };
 
+    if (checkResult.pageTitle != null) {
+      statePatch.lastPageTitle = checkResult.pageTitle;
+    }
+
+    // Phase2: 登録時のタイトルから変わったら初回のみ通知し、元に戻ったら解除する
+    if (checkResult.pageTitle != null && target.initial_page_title != null) {
+      const isChanged = checkResult.pageTitle !== target.initial_page_title;
+      if (isChanged && previousState.title_changed_at == null) {
+        statePatch.titleChangedAt = now;
+        emitter.emit('title-changed', {
+          target,
+          from: target.initial_page_title,
+          to: checkResult.pageTitle,
+          at: now,
+        });
+      } else if (!isChanged && previousState.title_changed_at != null) {
+        statePatch.titleChangedAt = null;
+      }
+    }
+
     if (incidentEvent === 'open') {
       statePatch.incidentStartAt = now;
       statePatch.recoveredAt = null;

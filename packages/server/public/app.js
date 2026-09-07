@@ -19,6 +19,11 @@ const el = {
   statIncidentCount: document.getElementById('stat-incident-count'),
   statDowntime: document.getElementById('stat-downtime'),
   responseChart: document.getElementById('response-chart'),
+  detailInitialTitle: document.getElementById('detail-initial-title'),
+  detailCurrentTitle: document.getElementById('detail-current-title'),
+  detailTitleChangedBadge: document.getElementById('detail-title-changed-badge'),
+  detailKeywordRow: document.getElementById('detail-keyword-row'),
+  detailKeywordStatus: document.getElementById('detail-keyword-status'),
 };
 
 let targetsCache = [];
@@ -47,7 +52,10 @@ function renderTargets(targets) {
     .map((t) => `
       <tr>
         <td><span class="status-badge ${t.status.toLowerCase()}">${statusLabel(t.status)}</span></td>
-        <td>${escapeHtml(t.name)}</td>
+        <td>
+          ${escapeHtml(t.name)}
+          ${t.titleChangedAt ? '<span class="badge-changed" title="ページタイトルが変わりました">タイトル変更</span>' : ''}
+        </td>
         <td><a href="${escapeHtml(t.url)}" target="_blank" rel="noopener">${escapeHtml(t.url)}</a></td>
         <td>${t.lastHttpStatus ?? '-'}</td>
         <td>${t.lastResponseTimeMs != null ? `${t.lastResponseTimeMs} ms` : '-'}</td>
@@ -152,6 +160,18 @@ async function loadDetail() {
   el.responseChart.innerHTML = buildResponseChartSvg(history);
 }
 
+function renderContentSection(target) {
+  el.detailInitialTitle.textContent = target.initialPageTitle ?? '(未取得)';
+  el.detailCurrentTitle.textContent = target.lastPageTitle ?? '(未取得)';
+  el.detailTitleChangedBadge.hidden = !target.titleChangedAt;
+
+  el.detailKeywordRow.hidden = !target.keyword;
+  if (target.keyword) {
+    const matched = target.lastError !== 'Keyword Not Found';
+    el.detailKeywordStatus.textContent = `"${target.keyword}" ${matched ? '検出' : '未検出'}`;
+  }
+}
+
 function openDetail(id) {
   const target = targetsCache.find((t) => String(t.id) === String(id));
   if (!target) return;
@@ -162,6 +182,7 @@ function openDetail(id) {
   el.periodTabs.querySelectorAll('.period-tab').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.period === detailPeriod);
   });
+  renderContentSection(target);
   el.detailModal.hidden = false;
   loadDetail();
 }
@@ -225,6 +246,7 @@ function startEdit(id) {
       el.form.elements.expectedStatusPattern.value = full.expected_status_pattern;
       el.form.elements.warningThresholdMs.value = full.warning_threshold_ms;
       el.form.elements.warningNotifyEnabled.checked = !!full.warning_notify_enabled;
+      el.form.elements.keyword.value = full.keyword ?? '';
     });
 
   el.submitFormBtn.textContent = '更新';
@@ -263,6 +285,7 @@ el.form.addEventListener('submit', async (event) => {
     expectedStatusPattern: formData.get('expectedStatusPattern'),
     warningThresholdMs: Number(formData.get('warningThresholdMs')),
     warningNotifyEnabled: formData.get('warningNotifyEnabled') === 'on',
+    keyword: formData.get('keyword') || null,
   };
 
   const url = editingId ? `/api/targets/${editingId}` : '/api/targets';

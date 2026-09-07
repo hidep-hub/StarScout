@@ -26,6 +26,9 @@ engine.on('incident-detected', ({ target, reason }) => {
 engine.on('incident-recovered', ({ target }) => {
   console.log(`[incident] ${target.name} recovered`);
 });
+engine.on('title-changed', ({ target, from, to }) => {
+  console.log(`[title-changed] ${target.name}: "${from}" -> "${to}"`);
+});
 
 const server = createHttpServer(router);
 engine.start();
