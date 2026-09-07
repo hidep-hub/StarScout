@@ -51,7 +51,7 @@
 - [x] URL登録画面
 - [x] 監視設定画面(正常ステータス上書き、WARNING遅延閾値、WARNING通知ON/OFF含む)
 - [x] 現在の障害一覧(監視対象一覧テーブルの状態バッジで確認可能)
-- [ ] 障害履歴(APIは実装済み `GET /api/targets/:id/history`・`/incidents` だが、閲覧するWeb UIは未実装)
+- [x] 障害履歴(APIは実装済み `GET /api/targets/:id/history`・`/incidents`。閲覧UIはSS-022でPhase2の詳細モーダルに実装)
 
 ### Storage
 
