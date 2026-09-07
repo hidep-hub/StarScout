@@ -25,6 +25,14 @@ export function createIncidentsRepository(db) {
     LIMIT @limit OFFSET @offset
   `);
 
+  const getStatsStmt = db.prepare(`
+    SELECT
+      COUNT(*) AS incidentCount,
+      COALESCE(SUM(duration_sec), 0) AS totalDowntimeSec
+    FROM incidents
+    WHERE target_id = @targetId AND started_at >= @since AND recovered_at IS NOT NULL
+  `);
+
   return {
     // 障害開始を記録し、作成したincidentを返す
     open(targetId, startedAt, reason = null) {
@@ -45,6 +53,16 @@ export function createIncidentsRepository(db) {
 
     findByTarget(targetId, { limit = 50, offset = 0 } = {}) {
       return findByTargetStmt.all({ targetId, limit, offset });
+    },
+
+    // sinceIso以降に開始し復旧済みのインシデント件数・総ダウンタイムを集計する
+    // (sinceIso以前から継続中のインシデントはカウント対象外)
+    getStats(targetId, sinceIso) {
+      const row = getStatsStmt.get({ targetId, since: sinceIso });
+      return {
+        incidentCount: row.incidentCount,
+        totalDowntimeSec: row.totalDowntimeSec,
+      };
     },
   };
 }

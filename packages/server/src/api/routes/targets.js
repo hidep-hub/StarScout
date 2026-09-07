@@ -84,4 +84,33 @@ export function registerTargetRoutes(router, storage, engine) {
     const limit = Number(query.get('limit') ?? 50);
     sendJson(res, 200, storage.incidents.findByTarget(id, { limit }));
   });
+
+  const PERIOD_HOURS = { '24h': 24, '7d': 24 * 7, '30d': 24 * 30 };
+
+  // Phase2: 期間内の平均応答時間・稼働率・インシデント統計
+  router.get('/api/targets/:id/stats', async ({ params, query, sendJson, res }) => {
+    const id = Number(params.id);
+    const periodHours = PERIOD_HOURS[query.get('period')] ?? PERIOD_HOURS['24h'];
+    const sinceIso = new Date(Date.now() - periodHours * 3600 * 1000).toISOString();
+
+    const historyStats = storage.history.getStats(id, sinceIso);
+    const incidentStats = storage.incidents.getStats(id, sinceIso);
+
+    const periodSec = periodHours * 3600;
+    const uptimePercent = Math.max(
+      0,
+      Math.min(100, ((periodSec - incidentStats.totalDowntimeSec) / periodSec) * 100),
+    );
+
+    sendJson(res, 200, {
+      periodHours,
+      avgResponseTimeMs:
+        historyStats.avgResponseTimeMs != null ? Math.round(historyStats.avgResponseTimeMs) : null,
+      maxResponseTimeMs: historyStats.maxResponseTimeMs,
+      minResponseTimeMs: historyStats.minResponseTimeMs,
+      uptimePercent: Math.round(uptimePercent * 100) / 100,
+      incidentCount: incidentStats.incidentCount,
+      totalDowntimeSec: incidentStats.totalDowntimeSec,
+    });
+  });
 }

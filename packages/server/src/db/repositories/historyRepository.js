@@ -15,6 +15,16 @@ export function createHistoryRepository(db) {
     DELETE FROM check_history WHERE checked_at < @before
   `);
 
+  const getStatsStmt = db.prepare(`
+    SELECT
+      COUNT(*) AS count,
+      AVG(response_time_ms) AS avgResponseTimeMs,
+      MAX(response_time_ms) AS maxResponseTimeMs,
+      MIN(response_time_ms) AS minResponseTimeMs
+    FROM check_history
+    WHERE target_id = @targetId AND checked_at >= @since AND response_time_ms IS NOT NULL
+  `);
+
   return {
     insert(record) {
       insertStmt.run({
@@ -36,6 +46,17 @@ export function createHistoryRepository(db) {
     deleteOlderThan(beforeIso) {
       const result = deleteOlderThanStmt.run({ before: beforeIso });
       return result.changes;
+    },
+
+    // sinceIso以降の応答時間統計(件数/平均/最大/最小)を集計する
+    getStats(targetId, sinceIso) {
+      const row = getStatsStmt.get({ targetId, since: sinceIso });
+      return {
+        count: row.count,
+        avgResponseTimeMs: row.avgResponseTimeMs,
+        maxResponseTimeMs: row.maxResponseTimeMs,
+        minResponseTimeMs: row.minResponseTimeMs,
+      };
     },
   };
 }

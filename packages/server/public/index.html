@@ -76,6 +76,42 @@
   </section>
 </main>
 
+<div id="detail-modal" class="modal-overlay" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="detail-title">詳細</h3>
+      <button id="detail-close-btn" class="btn">閉じる</button>
+    </div>
+
+    <div class="period-tabs" id="period-tabs">
+      <button class="period-tab" data-period="24h">24時間</button>
+      <button class="period-tab" data-period="7d">7日間</button>
+      <button class="period-tab" data-period="30d">30日間</button>
+    </div>
+
+    <div class="stat-cards">
+      <div class="stat-card">
+        <span class="stat-value" id="stat-avg-response">-</span>
+        <span class="stat-label">平均応答時間</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value" id="stat-uptime">-</span>
+        <span class="stat-label">稼働率</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value" id="stat-incident-count">-</span>
+        <span class="stat-label">インシデント件数</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value" id="stat-downtime">-</span>
+        <span class="stat-label">総ダウンタイム</span>
+      </div>
+    </div>
+
+    <div class="chart-container" id="response-chart"></div>
+  </div>
+</div>
+
 <script src="/app.js"></script>
 </body>
 </html>
