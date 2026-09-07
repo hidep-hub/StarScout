@@ -48,6 +48,16 @@ npm run start --workspace=@starscout/tray
 
 タスクトレイに状態アイコン(緑=正常 / 黄=警告 / 赤=異常)が表示され、右クリックメニューからダッシュボードを開く・終了ができます。
 
+### 4. (任意) Trayをexe化する
+
+開発モード(`electron .`)のままだとWindowsの「タスクバーに表示するアイコンを選択」設定にElectronとして表示されてしまうため、配布・常用するには実行ファイル化を推奨します。
+
+```bash
+npm run dist --workspace=@starscout/tray
+```
+
+`packages/tray/dist/StarScout <version>.exe` (ポータブル版、インストール不要でそのまま実行可能)が生成されます。パッケージ版はconfig.jsonを `%APPDATA%\StarScout\config.json` に保存します(開発モードは `packages/tray/data/config.json` のまま)。
+
 ## セキュリティに関する注意
 
 MVPでは認証・権限管理を実装していません。信頼された内部ネットワーク(閉域網)での利用を前提としています。インターネットに公開されたネットワークでの利用は避けてください。

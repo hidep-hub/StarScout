@@ -11,10 +11,14 @@ import { buildTooltip } from './tooltip.js';
 import { playTestNotificationScenario } from './testNotification.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const config = loadConfig(join(__dirname, '..', 'data', 'config.json'));
 
 app.setName('StarScout');
 app.setAppUserModelId('com.starscout.tray'); // Windows Toast通知に必要
+
+// パッケージ版はapp.asarが読み取り専用のため、config.jsonはOS標準のuserDataディレクトリに保存する
+// (開発モードは従来通りpackages/tray/data/配下でリポジトリ内完結させる)
+const configDir = app.isPackaged ? app.getPath('userData') : join(__dirname, '..', 'data');
+const config = loadConfig(join(configDir, 'config.json'));
 
 let tray;
 let stopPolling;
