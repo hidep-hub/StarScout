@@ -5,11 +5,11 @@ export function createTargetsRepository(db) {
     INSERT INTO targets (
       name, url, port, initial_page_title, enabled,
       interval_sec, timeout_sec, expected_status_pattern,
-      warning_threshold_ms, warning_notify_enabled
+      warning_threshold_ms, warning_notify_enabled, keyword
     ) VALUES (
       @name, @url, @port, @initialPageTitle, @enabled,
       @intervalSec, @timeoutSec, @expectedStatusPattern,
-      @warningThresholdMs, @warningNotifyEnabled
+      @warningThresholdMs, @warningNotifyEnabled, @keyword
     )
   `);
 
@@ -32,6 +32,7 @@ export function createTargetsRepository(db) {
       expected_status_pattern = @expectedStatusPattern,
       warning_threshold_ms = @warningThresholdMs,
       warning_notify_enabled = @warningNotifyEnabled,
+      keyword = @keyword,
       updated_at = ${NOW}
     WHERE id = @id
   `);
@@ -51,6 +52,7 @@ export function createTargetsRepository(db) {
         expectedStatusPattern: input.expectedStatusPattern ?? '2xx',
         warningThresholdMs: input.warningThresholdMs ?? 2000,
         warningNotifyEnabled: input.warningNotifyEnabled ? 1 : 0,
+        keyword: input.keyword ?? null,
       };
 
       db.exec('BEGIN');
@@ -90,6 +92,7 @@ export function createTargetsRepository(db) {
         expectedStatusPattern: input.expectedStatusPattern ?? current.expected_status_pattern,
         warningThresholdMs: input.warningThresholdMs ?? current.warning_threshold_ms,
         warningNotifyEnabled: (input.warningNotifyEnabled ?? current.warning_notify_enabled) ? 1 : 0,
+        keyword: input.keyword ?? current.keyword,
       });
 
       return findByIdStmt.get(id);

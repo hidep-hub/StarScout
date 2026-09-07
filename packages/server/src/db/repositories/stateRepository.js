@@ -9,6 +9,8 @@ const UPDATABLE_COLUMNS = {
   lastHttpStatus: 'last_http_status',
   lastResponseTimeMs: 'last_response_time_ms',
   lastError: 'last_error',
+  lastPageTitle: 'last_page_title',
+  titleChangedAt: 'title_changed_at',
 };
 
 export function createStateRepository(db) {

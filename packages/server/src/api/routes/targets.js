@@ -1,13 +1,13 @@
-// FR-001: 登録時に初期ページタイトルを自動取得して保持するのみ(状態判定には使わない)
+import { extractPageTitle } from '../../monitor/pageTitle.js';
+
+// FR-001: 登録時に初期ページタイトルを自動取得して保持する(Phase2でのタイトル変更検知の基準値になる)
 async function fetchPageTitle(url) {
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 3000);
     const response = await fetch(url, { signal: controller.signal });
     clearTimeout(timer);
-    const html = await response.text();
-    const match = /<title[^>]*>([^<]*)<\/title>/i.exec(html);
-    return match ? match[1].trim() : null;
+    return extractPageTitle(await response.text());
   } catch {
     return null;
   }
@@ -83,5 +83,34 @@ export function registerTargetRoutes(router, storage, engine) {
     const id = Number(params.id);
     const limit = Number(query.get('limit') ?? 50);
     sendJson(res, 200, storage.incidents.findByTarget(id, { limit }));
+  });
+
+  const PERIOD_HOURS = { '24h': 24, '7d': 24 * 7, '30d': 24 * 30 };
+
+  // Phase2: 期間内の平均応答時間・稼働率・インシデント統計
+  router.get('/api/targets/:id/stats', async ({ params, query, sendJson, res }) => {
+    const id = Number(params.id);
+    const periodHours = PERIOD_HOURS[query.get('period')] ?? PERIOD_HOURS['24h'];
+    const sinceIso = new Date(Date.now() - periodHours * 3600 * 1000).toISOString();
+
+    const historyStats = storage.history.getStats(id, sinceIso);
+    const incidentStats = storage.incidents.getStats(id, sinceIso);
+
+    const periodSec = periodHours * 3600;
+    const uptimePercent = Math.max(
+      0,
+      Math.min(100, ((periodSec - incidentStats.totalDowntimeSec) / periodSec) * 100),
+    );
+
+    sendJson(res, 200, {
+      periodHours,
+      avgResponseTimeMs:
+        historyStats.avgResponseTimeMs != null ? Math.round(historyStats.avgResponseTimeMs) : null,
+      maxResponseTimeMs: historyStats.maxResponseTimeMs,
+      minResponseTimeMs: historyStats.minResponseTimeMs,
+      uptimePercent: Math.round(uptimePercent * 100) / 100,
+      incidentCount: incidentStats.incidentCount,
+      totalDowntimeSec: incidentStats.totalDowntimeSec,
+    });
   });
 }

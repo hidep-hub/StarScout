@@ -125,6 +125,32 @@ test('GET /api/status aggregates counts by status', async () => {
   }
 });
 
+test('GET /api/targets/:id/stats aggregates response time and uptime within period', async () => {
+  const ctx = await setup();
+  try {
+    const target = ctx.storage.targets.create({ name: 'A', url: 'https://a.example.local' });
+    ctx.storage.history.insert({
+      targetId: target.id,
+      checkedAt: new Date().toISOString(),
+      httpStatus: 200,
+      responseTimeMs: 200,
+      result: 'NORMAL',
+    });
+    const incident = ctx.storage.incidents.open(target.id, new Date(Date.now() - 60_000).toISOString());
+    ctx.storage.incidents.close(incident.id, new Date().toISOString());
+
+    const res = await fetch(`${ctx.baseUrl}/api/targets/${target.id}/stats?period=24h`);
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.periodHours, 24);
+    assert.equal(body.avgResponseTimeMs, 200);
+    assert.equal(body.incidentCount, 1);
+    assert.ok(body.uptimePercent > 99 && body.uptimePercent <= 100);
+  } finally {
+    await ctx.close();
+  }
+});
+
 test('unknown API route returns 404 JSON', async () => {
   const ctx = await setup();
   try {

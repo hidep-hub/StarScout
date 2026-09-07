@@ -10,10 +10,27 @@ const el = {
   toggleFormBtn: document.getElementById('toggle-form-btn'),
   cancelFormBtn: document.getElementById('cancel-form-btn'),
   submitFormBtn: document.getElementById('submit-form-btn'),
+  detailModal: document.getElementById('detail-modal'),
+  detailTitle: document.getElementById('detail-title'),
+  detailCloseBtn: document.getElementById('detail-close-btn'),
+  periodTabs: document.getElementById('period-tabs'),
+  statAvgResponse: document.getElementById('stat-avg-response'),
+  statUptime: document.getElementById('stat-uptime'),
+  statIncidentCount: document.getElementById('stat-incident-count'),
+  statDowntime: document.getElementById('stat-downtime'),
+  responseChart: document.getElementById('response-chart'),
+  detailInitialTitle: document.getElementById('detail-initial-title'),
+  detailCurrentTitle: document.getElementById('detail-current-title'),
+  detailTitleChangedBadge: document.getElementById('detail-title-changed-badge'),
+  detailKeywordRow: document.getElementById('detail-keyword-row'),
+  detailKeywordStatus: document.getElementById('detail-keyword-status'),
+  incidentRows: document.getElementById('incident-rows'),
 };
 
 let targetsCache = [];
 let editingId = null;
+let detailTargetId = null;
+let detailPeriod = '24h';
 
 function formatDateTime(iso) {
   if (!iso) return '-';
@@ -36,13 +53,17 @@ function renderTargets(targets) {
     .map((t) => `
       <tr>
         <td><span class="status-badge ${t.status.toLowerCase()}">${statusLabel(t.status)}</span></td>
-        <td>${escapeHtml(t.name)}</td>
+        <td>
+          ${escapeHtml(t.name)}
+          ${t.titleChangedAt ? '<span class="badge-changed" title="ページタイトルが変わりました">タイトル変更</span>' : ''}
+        </td>
         <td><a href="${escapeHtml(t.url)}" target="_blank" rel="noopener">${escapeHtml(t.url)}</a></td>
         <td>${t.lastHttpStatus ?? '-'}</td>
         <td>${t.lastResponseTimeMs != null ? `${t.lastResponseTimeMs} ms` : '-'}</td>
         <td>${formatDateTime(t.lastCheckedAt)}</td>
         <td>${formatDateTime(t.incidentStartAt)}</td>
         <td>
+          <button class="row-detail" data-id="${t.id}">詳細</button>
           <button class="row-edit" data-id="${t.id}">編集</button>
           <button class="row-delete" data-id="${t.id}">削除</button>
         </td>
@@ -50,6 +71,9 @@ function renderTargets(targets) {
     `)
     .join('');
 
+  el.rows.querySelectorAll('.row-detail').forEach((btn) => {
+    btn.addEventListener('click', () => openDetail(btn.dataset.id));
+  });
   el.rows.querySelectorAll('.row-edit').forEach((btn) => {
     btn.addEventListener('click', () => startEdit(btn.dataset.id));
   });
@@ -57,6 +81,154 @@ function renderTargets(targets) {
     btn.addEventListener('click', () => deleteTarget(btn.dataset.id));
   });
 }
+
+function formatDurationSec(sec) {
+  if (sec == null) return '-';
+  if (sec < 60) return `${sec}秒`;
+  if (sec < 3600) return `${Math.floor(sec / 60)}分${sec % 60}秒`;
+  const hours = Math.floor(sec / 3600);
+  const minutes = Math.floor((sec % 3600) / 60);
+  return `${hours}時間${minutes}分`;
+}
+
+// 応答時間の推移をSVG折れ線グラフとして描画する(チャートライブラリ非依存)
+function buildResponseChartSvg(historyRows) {
+  const width = 600;
+  const height = 160;
+  const paddingX = 8;
+  const paddingY = 12;
+
+  const rows = [...historyRows].reverse(); // APIはchecked_at降順のため、古い→新しい順に並べ替える
+  const validValues = rows.map((r) => r.response_time_ms).filter((v) => v != null);
+
+  if (validValues.length === 0) {
+    return '<p class="chart-empty">表示できるデータがありません</p>';
+  }
+
+  const maxValue = Math.max(...validValues, 1);
+  const stepX = rows.length > 1 ? (width - paddingX * 2) / (rows.length - 1) : 0;
+
+  const points = rows.map((r, i) => {
+    if (r.response_time_ms == null) return null;
+    const x = paddingX + stepX * i;
+    const y = height - paddingY - (r.response_time_ms / maxValue) * (height - paddingY * 2);
+    return [x, y];
+  });
+
+  // DOWN等で応答時間がnullの箇所は線を途切れさせるため、連続区間ごとにpolylineを分ける
+  const segments = [];
+  let current = [];
+  points.forEach((p) => {
+    if (p == null) {
+      if (current.length > 0) segments.push(current);
+      current = [];
+    } else {
+      current.push(p);
+    }
+  });
+  if (current.length > 0) segments.push(current);
+
+  const polylines = segments
+    .map(
+      (seg) =>
+        `<polyline points="${seg.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ')}" class="chart-line" />`,
+    )
+    .join('');
+
+  return `
+    <svg viewBox="0 0 ${width} ${height}" class="response-chart-svg" preserveAspectRatio="none">
+      <line x1="${paddingX}" y1="${height - paddingY}" x2="${width - paddingX}" y2="${height - paddingY}" class="chart-baseline" />
+      ${polylines}
+    </svg>
+    <p class="chart-meta">最大 ${maxValue} ms(直近${rows.length}件)</p>
+  `;
+}
+
+async function loadIncidentHistory(targetId) {
+  el.incidentRows.innerHTML = '<tr><td colspan="4" class="empty">読み込み中...</td></tr>';
+
+  const incidents = await fetch(`/api/targets/${targetId}/incidents?limit=20`).then((res) => res.json());
+
+  if (incidents.length === 0) {
+    el.incidentRows.innerHTML = '<tr><td colspan="4" class="empty">障害履歴はありません</td></tr>';
+    return;
+  }
+
+  el.incidentRows.innerHTML = incidents
+    .map(
+      (incident) => `
+        <tr>
+          <td>${formatDateTime(incident.started_at)}</td>
+          <td>${formatDateTime(incident.recovered_at)}</td>
+          <td>${formatDurationSec(incident.duration_sec)}</td>
+          <td>${escapeHtml(incident.reason ?? '-')}</td>
+        </tr>
+      `,
+    )
+    .join('');
+}
+
+async function loadDetail() {
+  if (detailTargetId == null) return;
+
+  el.responseChart.innerHTML = '<p class="chart-empty">読み込み中...</p>';
+
+  const [stats, history] = await Promise.all([
+    fetch(`/api/targets/${detailTargetId}/stats?period=${detailPeriod}`).then((res) => res.json()),
+    fetch(`/api/targets/${detailTargetId}/history?limit=200`).then((res) => res.json()),
+  ]);
+
+  el.statAvgResponse.textContent = stats.avgResponseTimeMs != null ? `${stats.avgResponseTimeMs} ms` : '-';
+  el.statUptime.textContent = `${stats.uptimePercent.toFixed(2)}%`;
+  el.statIncidentCount.textContent = `${stats.incidentCount}件`;
+  el.statDowntime.textContent = formatDurationSec(stats.totalDowntimeSec);
+  el.responseChart.innerHTML = buildResponseChartSvg(history);
+}
+
+function renderContentSection(target) {
+  el.detailInitialTitle.textContent = target.initialPageTitle ?? '(未取得)';
+  el.detailCurrentTitle.textContent = target.lastPageTitle ?? '(未取得)';
+  el.detailTitleChangedBadge.hidden = !target.titleChangedAt;
+
+  el.detailKeywordRow.hidden = !target.keyword;
+  if (target.keyword) {
+    const matched = target.lastError !== 'Keyword Not Found';
+    el.detailKeywordStatus.textContent = `"${target.keyword}" ${matched ? '検出' : '未検出'}`;
+  }
+}
+
+function openDetail(id) {
+  const target = targetsCache.find((t) => String(t.id) === String(id));
+  if (!target) return;
+
+  detailTargetId = target.id;
+  detailPeriod = '24h';
+  el.detailTitle.textContent = `詳細: ${target.name}`;
+  el.periodTabs.querySelectorAll('.period-tab').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.period === detailPeriod);
+  });
+  renderContentSection(target);
+  el.detailModal.hidden = false;
+  loadDetail();
+  loadIncidentHistory(target.id);
+}
+
+function closeDetail() {
+  detailTargetId = null;
+  el.detailModal.hidden = true;
+}
+
+el.detailCloseBtn.addEventListener('click', closeDetail);
+el.detailModal.addEventListener('click', (event) => {
+  if (event.target === el.detailModal) closeDetail();
+});
+el.periodTabs.querySelectorAll('.period-tab').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    detailPeriod = btn.dataset.period;
+    el.periodTabs.querySelectorAll('.period-tab').forEach((b) => b.classList.toggle('active', b === btn));
+    loadDetail();
+  });
+});
 
 function escapeHtml(str) {
   const div = document.createElement('div');
@@ -100,6 +272,7 @@ function startEdit(id) {
       el.form.elements.expectedStatusPattern.value = full.expected_status_pattern;
       el.form.elements.warningThresholdMs.value = full.warning_threshold_ms;
       el.form.elements.warningNotifyEnabled.checked = !!full.warning_notify_enabled;
+      el.form.elements.keyword.value = full.keyword ?? '';
     });
 
   el.submitFormBtn.textContent = '更新';
@@ -138,6 +311,7 @@ el.form.addEventListener('submit', async (event) => {
     expectedStatusPattern: formData.get('expectedStatusPattern'),
     warningThresholdMs: Number(formData.get('warningThresholdMs')),
     warningNotifyEnabled: formData.get('warningNotifyEnabled') === 'on',
+    keyword: formData.get('keyword') || null,
   };
 
   const url = editingId ? `/api/targets/${editingId}` : '/api/targets';
