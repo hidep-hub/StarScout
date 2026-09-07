@@ -62,16 +62,16 @@
 
 ## Phase 2: 利便性向上
 
-- [ ] 応答時間表示
-- [ ] 応答時間グラフ
-- [ ] 稼働率
-- [ ] インシデント統計
-- [ ] Page Title確認
-- [ ] Page Title変更検知
-- [ ] Keywordチェック
-- [ ] Expected Status設定
-- [ ] 監視間隔設定
-- [ ] Timeout設定
+- [x] 応答時間表示(SS-019)
+- [x] 応答時間グラフ(SS-019)
+- [x] 稼働率(SS-019)
+- [x] インシデント統計(SS-019)
+- [x] Page Title確認(SS-020)
+- [x] Page Title変更検知(SS-020)
+- [x] Keywordチェック(SS-020)
+- [x] Expected Status設定(Phase1のSS-006/SS-008で既に実装済み。registered targets.expected_status_pattern + 編集フォーム + PUT即時反映)
+- [x] 監視間隔設定(Phase1のSS-006/SS-008で既に実装済み。targets.interval_sec + 編集フォーム + PUT時にMonitor Engineのスケジュールも再設定)
+- [x] Timeout設定(Phase1のSS-006/SS-008で既に実装済み。targets.timeout_sec + 編集フォーム + httpChecker.jsで使用)
 
 ## Phase 3: 監視機能拡張
 
