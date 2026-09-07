@@ -24,6 +24,7 @@ const el = {
   detailTitleChangedBadge: document.getElementById('detail-title-changed-badge'),
   detailKeywordRow: document.getElementById('detail-keyword-row'),
   detailKeywordStatus: document.getElementById('detail-keyword-status'),
+  incidentRows: document.getElementById('incident-rows'),
 };
 
 let targetsCache = [];
@@ -143,6 +144,30 @@ function buildResponseChartSvg(historyRows) {
   `;
 }
 
+async function loadIncidentHistory(targetId) {
+  el.incidentRows.innerHTML = '<tr><td colspan="4" class="empty">読み込み中...</td></tr>';
+
+  const incidents = await fetch(`/api/targets/${targetId}/incidents?limit=20`).then((res) => res.json());
+
+  if (incidents.length === 0) {
+    el.incidentRows.innerHTML = '<tr><td colspan="4" class="empty">障害履歴はありません</td></tr>';
+    return;
+  }
+
+  el.incidentRows.innerHTML = incidents
+    .map(
+      (incident) => `
+        <tr>
+          <td>${formatDateTime(incident.started_at)}</td>
+          <td>${formatDateTime(incident.recovered_at)}</td>
+          <td>${formatDurationSec(incident.duration_sec)}</td>
+          <td>${escapeHtml(incident.reason ?? '-')}</td>
+        </tr>
+      `,
+    )
+    .join('');
+}
+
 async function loadDetail() {
   if (detailTargetId == null) return;
 
@@ -185,6 +210,7 @@ function openDetail(id) {
   renderContentSection(target);
   el.detailModal.hidden = false;
   loadDetail();
+  loadIncidentHistory(target.id);
 }
 
 function closeDetail() {

@@ -298,6 +298,11 @@ main {
   background: rgba(234, 179, 8, 0.15);
 }
 
+/* 詳細モーダル側はhidden属性で表示/非表示を切り替えるため、displayの上書きを防ぐ */
+.badge-changed[hidden] {
+  display: none;
+}
+
 .period-tabs {
   display: flex;
   gap: 8px;
@@ -379,4 +384,43 @@ main {
   color: var(--text-dim);
   font-size: 12px;
   text-align: center;
+}
+
+.incident-history {
+  margin-top: 16px;
+}
+
+.incident-history h4 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.incident-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.incident-table th,
+.incident-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.incident-table th {
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.incident-table .empty {
+  text-align: center;
+  color: var(--text-dim);
+  padding: 16px;
 }
