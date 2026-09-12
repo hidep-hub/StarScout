@@ -273,6 +273,7 @@ function startEdit(id) {
       el.form.elements.warningThresholdMs.value = full.warning_threshold_ms;
       el.form.elements.warningNotifyEnabled.checked = !!full.warning_notify_enabled;
       el.form.elements.keyword.value = full.keyword ?? '';
+      el.form.elements.notificationMode.value = full.notification_mode ?? 'aggregate';
     });
 
   el.submitFormBtn.textContent = '更新';
@@ -312,6 +313,7 @@ el.form.addEventListener('submit', async (event) => {
     warningThresholdMs: Number(formData.get('warningThresholdMs')),
     warningNotifyEnabled: formData.get('warningNotifyEnabled') === 'on',
     keyword: formData.get('keyword') || null,
+    notificationMode: formData.get('notificationMode') || 'aggregate',
   };
 
   const url = editingId ? `/api/targets/${editingId}` : '/api/targets';

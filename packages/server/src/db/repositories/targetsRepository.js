@@ -1,15 +1,20 @@
 const NOW = "strftime('%Y-%m-%dT%H:%M:%fZ', 'now')";
 
+// SS-029: 不正な値が渡されても既定の集約優先にフォールバックする
+function normalizeNotificationMode(value) {
+  return value === 'individual' ? 'individual' : 'aggregate';
+}
+
 export function createTargetsRepository(db) {
   const insertTargetStmt = db.prepare(`
     INSERT INTO targets (
       name, url, port, initial_page_title, enabled,
       interval_sec, timeout_sec, expected_status_pattern,
-      warning_threshold_ms, warning_notify_enabled, keyword
+      warning_threshold_ms, warning_notify_enabled, keyword, notification_mode
     ) VALUES (
       @name, @url, @port, @initialPageTitle, @enabled,
       @intervalSec, @timeoutSec, @expectedStatusPattern,
-      @warningThresholdMs, @warningNotifyEnabled, @keyword
+      @warningThresholdMs, @warningNotifyEnabled, @keyword, @notificationMode
     )
   `);
 
@@ -33,6 +38,7 @@ export function createTargetsRepository(db) {
       warning_threshold_ms = @warningThresholdMs,
       warning_notify_enabled = @warningNotifyEnabled,
       keyword = @keyword,
+      notification_mode = @notificationMode,
       updated_at = ${NOW}
     WHERE id = @id
   `);
@@ -53,6 +59,7 @@ export function createTargetsRepository(db) {
         warningThresholdMs: input.warningThresholdMs ?? 2000,
         warningNotifyEnabled: input.warningNotifyEnabled ? 1 : 0,
         keyword: input.keyword ?? null,
+        notificationMode: normalizeNotificationMode(input.notificationMode),
       };
 
       db.exec('BEGIN');
@@ -93,6 +100,7 @@ export function createTargetsRepository(db) {
         warningThresholdMs: input.warningThresholdMs ?? current.warning_threshold_ms,
         warningNotifyEnabled: (input.warningNotifyEnabled ?? current.warning_notify_enabled) ? 1 : 0,
         keyword: input.keyword ?? current.keyword,
+        notificationMode: normalizeNotificationMode(input.notificationMode ?? current.notification_mode),
       });
 
       return findByIdStmt.get(id);

@@ -144,6 +144,23 @@ main {
   color: var(--text);
 }
 
+/* SS-029: 監視対象ごとの通知方式(集約優先/常に個別通知) */
+.form-row .radio-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.form-row label.radio {
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text);
+}
+
 .form-row input[type="text"],
 .form-row input[type="url"],
 .form-row input[type="number"] {
