@@ -17,6 +17,7 @@ export function registerStatusRoutes(router, storage) {
         url: target.url,
         enabled: !!target.enabled,
         warningNotifyEnabled: !!target.warning_notify_enabled,
+        notificationMode: target.notification_mode,
         status: state.status,
         lastHttpStatus: state.last_http_status,
         lastResponseTimeMs: state.last_response_time_ms,

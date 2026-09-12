@@ -52,6 +52,13 @@
       </div>
       <div class="form-row">
         <label class="checkbox"><input type="checkbox" name="warningNotifyEnabled"> WARNING時に通知</label>
+        <span class="radio-group">
+          通知方式
+          <label class="radio"><input type="radio" name="notificationMode" value="aggregate" checked> 集約優先</label>
+          <label class="radio"><input type="radio" name="notificationMode" value="individual"> 常に個別通知</label>
+        </span>
+      </div>
+      <div class="form-row">
         <button type="submit" id="submit-form-btn" class="btn primary">登録</button>
         <button type="button" id="cancel-form-btn" class="btn">キャンセル</button>
       </div>

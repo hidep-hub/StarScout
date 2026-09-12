@@ -108,6 +108,34 @@ test('PUT /api/targets/:id updates fields and DELETE removes it', async () => {
   }
 });
 
+test('POST/PUT /api/targets round-trip notificationMode, and GET /api/status reflects it', async () => {
+  const ctx = await setup();
+  try {
+    const createRes = await fetch(`${ctx.baseUrl}/api/targets`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Noisy', url: 'http://127.0.0.1:1/', notificationMode: 'individual' }),
+    });
+    const created = await createRes.json();
+    assert.equal(created.notification_mode, 'individual');
+
+    const statusRes = await fetch(`${ctx.baseUrl}/api/status`);
+    const statusBody = await statusRes.json();
+    const item = statusBody.targets.find((t) => t.id === created.id);
+    assert.equal(item.notificationMode, 'individual');
+
+    const putRes = await fetch(`${ctx.baseUrl}/api/targets/${created.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notificationMode: 'aggregate' }),
+    });
+    const updated = await putRes.json();
+    assert.equal(updated.notification_mode, 'aggregate');
+  } finally {
+    await ctx.close();
+  }
+});
+
 test('GET /api/status aggregates counts by status', async () => {
   const ctx = await setup();
   try {

@@ -31,6 +31,42 @@ test('targets.create / update persist the keyword field', () => {
   storage.close();
 });
 
+test('targets.create defaults notificationMode to aggregate, and rejects unknown values', () => {
+  const storage = setup();
+
+  const defaulted = storage.targets.create({ name: 'A', url: 'https://a.example.local' });
+  assert.equal(defaulted.notification_mode, 'aggregate');
+
+  const explicit = storage.targets.create({
+    name: 'B',
+    url: 'https://b.example.local',
+    notificationMode: 'individual',
+  });
+  assert.equal(explicit.notification_mode, 'individual');
+
+  const invalid = storage.targets.create({
+    name: 'C',
+    url: 'https://c.example.local',
+    notificationMode: 'something-else',
+  });
+  assert.equal(invalid.notification_mode, 'aggregate');
+
+  storage.close();
+});
+
+test('targets.update changes notificationMode and preserves it when omitted', () => {
+  const storage = setup();
+  const target = storage.targets.create({ name: 'A', url: 'https://a.example.local' });
+
+  const updated = storage.targets.update(target.id, { notificationMode: 'individual' });
+  assert.equal(updated.notification_mode, 'individual');
+
+  const untouched = storage.targets.update(target.id, { name: 'A2' });
+  assert.equal(untouched.notification_mode, 'individual');
+
+  storage.close();
+});
+
 test('targets.findAll / update / remove', () => {
   const storage = setup();
   const a = storage.targets.create({ name: 'A', url: 'https://a.example.local' });
